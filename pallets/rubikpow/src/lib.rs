@@ -25,11 +25,20 @@ pub mod pallet {
         type Currency: Currency<Self::AccountId>;
     }
 
+    #[pallet::storage]
+    #[pallet::getter(fn difficulty)]
+    pub type Difficulty<T: Config> = StorageValue<_, u32, ValueQuery>;
+
+    #[pallet::storage]
+    #[pallet::getter(fn last_nonce)]
+    pub type LastNonce<T: Config> = StorageValue<_, u64, ValueQuery>;
+
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         BlockMined { miner: T::AccountId, cube_size: u32 },
         Reward { miner: T::AccountId, amount: u32 },
+        DifficultyAdjustment { new_difficulty: u32 },
     }
 
     #[pallet::error]
@@ -37,40 +46,85 @@ pub mod pallet {
         InvalidSolution,
         CubeTooSmall,
         CubeTooLarge,
+        InvalidNonce,
     }
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(0)]
-        #[pallet::weight(10_000)] // TODO: adjust weight
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))] // Adjust weight based on complexity
         pub fn submit_solution(
             origin: OriginFor<T>,
             cube_size: u32,
-            scramble: Vec<Move>,
+            nonce: u64,
             solution: Vec<Move>,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
-            ensure!(cube_size >= 3, Error::<T>::CubeTooSmall);
+            ensure!(cube_size >= 2, Error::<T>::CubeTooSmall);
             ensure!(cube_size <= 16, Error::<T>::CubeTooLarge); // Limit cube size for performance
 
-            let mut cube = Cube::new(cube_size as usize);
-            for m in scramble.iter() {
-                cube.apply_move(m);
-            }
+            // Ensure nonce is unique and increasing
+            let last_nonce = Self::last_nonce();
+            ensure!(nonce > last_nonce, Error::<T>::InvalidNonce);
+            <LastNonce<T>>::put(nonce);
 
+            // Create cube and scramble it with the nonce
+            let mut cube = Cube::new(cube_size as usize);
+            let scramble = cube.scramble(nonce);
+
+            // Verify solution
             ensure!(cube.verify_solution(&solution), Error::<T>::InvalidSolution);
 
-            let difficulty = calculate_difficulty(cube_size as usize);
-            let reward = difficulty * 10; // Example reward calculation
+            // Check if the cube state meets the current difficulty target
+            let difficulty = Self::difficulty();
+            let target_hash = Self::calculate_target_hash(difficulty);
+            ensure!(cube.meets_difficulty(&target_hash), Error::<T>::InvalidSolution);
 
-            // Issue reward
-            // This is a simplified example. A real implementation would use a proper currency system.
+            let reward = Self::calculate_reward(cube_size);
+            let new_difficulty = Self::adjust_difficulty(difficulty, cube_size);
+
+            <Difficulty<T>>::put(new_difficulty);
+
+            // Issue reward (simplified - in reality, would use T::Currency)
             // For now, we just deposit an event.
             Self::deposit_event(Event::BlockMined { miner: who.clone(), cube_size });
             Self::deposit_event(Event::Reward { miner: who, amount: reward });
+            Self::deposit_event(Event::DifficultyAdjustment { new_difficulty });
 
             Ok(())
+        }
+
+        #[pallet::call_index(1)]
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn set_difficulty(origin: OriginFor<T>, new_difficulty: u32) -> DispatchResult {
+            ensure_root(origin)?;
+            <Difficulty<T>>::put(new_difficulty);
+            Self::deposit_event(Event::DifficultyAdjustment { new_difficulty });
+            Ok(())
+        }
+    }
+
+    impl<T: Config> Pallet<T> {
+        fn calculate_target_hash(difficulty: u32) -> [u8; 32] {
+            // Simplified target calculation based on difficulty
+            let mut target = [0u8; 32];
+            let difficulty_bytes = difficulty.to_le_bytes();
+            target[..4].copy_from_slice(&difficulty_bytes);
+            target
+        }
+
+        fn calculate_reward(cube_size: u32) -> u32 {
+            // Reward based on cube size and difficulty
+            let base_reward = 1000;
+            base_reward * cube_size
+        }
+
+        fn adjust_difficulty(current_difficulty: u32, cube_size: u32) -> u32 {
+            // Simple difficulty adjustment based on cube size
+            // In a real implementation, this would be based on block time
+            let adjustment_factor = (cube_size * 100) / (current_difficulty.max(1));
+            current_difficulty.saturating_add(adjustment_factor)
         }
     }
 }
