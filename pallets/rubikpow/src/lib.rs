@@ -56,8 +56,8 @@ pub mod pallet {
         pub fn submit_solution(
             origin: OriginFor<T>,
             cube_size: u32,
+            moves: Vec<Move>,
             nonce: u64,
-            solution: Vec<Move>,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
 
@@ -71,15 +71,17 @@ pub mod pallet {
 
             // Create cube and scramble it with the nonce
             let mut cube = Cube::new(cube_size as usize);
-            let scramble = cube.scramble(nonce);
+            let block_header = b"mock_block_header"; // In a real implementation, this would be the actual block header
+            let scramble = cube.scramble_deterministic(nonce, block_header);
 
             // Verify solution
-            ensure!(cube.verify_solution(&solution), Error::<T>::InvalidSolution);
+            ensure!(cube.verify_solution(&moves), Error::<T>::InvalidSolution);
 
             // Check if the cube state meets the current difficulty target
             let difficulty = Self::difficulty();
-            let target_hash = Self::calculate_target_hash(difficulty);
-            ensure!(cube.meets_difficulty(&target_hash), Error::<T>::InvalidSolution);
+            let target = difficulty; // Simplified: target is same as difficulty
+            let hash = [0u8; 32]; // In a real implementation, this would be the cube's state hash
+            ensure!(cube.meets_difficulty(hash, target), Error::<T>::InvalidSolution);
 
             let reward = Self::calculate_reward(cube_size);
             let new_difficulty = Self::adjust_difficulty(difficulty, cube_size);
@@ -106,14 +108,6 @@ pub mod pallet {
     }
 
     impl<T: Config> Pallet<T> {
-        fn calculate_target_hash(difficulty: u32) -> [u8; 32] {
-            // Simplified target calculation based on difficulty
-            let mut target = [0u8; 32];
-            let difficulty_bytes = difficulty.to_le_bytes();
-            target[..4].copy_from_slice(&difficulty_bytes);
-            target
-        }
-
         fn calculate_reward(cube_size: u32) -> u32 {
             // Reward based on cube size and difficulty
             let base_reward = 1000;

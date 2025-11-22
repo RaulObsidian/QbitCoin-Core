@@ -8,9 +8,16 @@ use tiny_keccak::{Hasher, Keccak};
 #[derive(Debug, Clone)]
 pub struct Cube {
     size: usize,
+    // For n x n x n cube, we need to track corner and edge permutations and orientations
+    // This is a simplified representation. A full implementation would require
+    // more complex data structures to handle all cubies.
+    corners: [[usize; 3]; 8], // Corner cubie positions (8 corners)
+    edges: [[usize; 2]; 12], // Edge cubie positions (12 edges)
+    // Orientation states for corners and edges
+    corner_orientations: [u8; 8], // 0, 1, 2 for 3 orientations
+    edge_orientations: [u8; 12],  // 0, 1 for 2 orientations
+    // Color faces (for visualization and solving checks)
     faces: HashMap<Face, Vec<Vec<Color>>>,
-    // Orientation tracking for each cubie
-    orientations: Vec<Vec<Vec<CubieOrientation>>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -50,30 +57,9 @@ impl fmt::Display for Color {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default)]
-struct CubieOrientation {
-    /// Orientation value for each of the 3 axes (x, y, z)
-    /// Values: 0 (default), 1, 2 (rotated)
-    orientation: [u8; 3],
-}
-
-impl CubieOrientation {
-    fn apply_rotation(&mut self, axis: usize) {
-        // Apply rotation to the orientation state
-        // This is a simplified model; a full implementation would track
-        // all 3D orientations and parity changes.
-        self.orientation[axis] = (self.orientation[axis] + 1) % 4;
-    }
-
-    fn is_aligned(&self) -> bool {
-        self.orientation == [0, 0, 0]
-    }
-}
-
 impl Cube {
     pub fn new(size: usize) -> Self {
         let mut faces = HashMap::new();
-        let mut orientations = Vec::new();
 
         for &face in &[Face::Up, Face::Down, Face::Left, Face::Right, Face::Front, Face::Back] {
             let mut face_data = Vec::with_capacity(size);
@@ -83,24 +69,39 @@ impl Cube {
             faces.insert(face, face_data);
         }
 
-        for _ in 0..size {
-            let mut y_layer = Vec::new();
-            for _ in 0..size {
-                let mut x_row = Vec::new();
-                for _ in 0..size {
-                    x_row.push(CubieOrientation::default());
-                }
-                y_layer.push(x_row);
-            }
-            orientations.push(y_layer);
-        }
+        // Initialize corner and edge positions (simplified for this example)
+        let corners = [
+            [0, 1, 2], [0, 2, 5], [0, 5, 4], [0, 4, 1], // Top layer
+            [5, 2, 3], [5, 3, 6], [5, 6, 7], [5, 7, 4], // Bottom layer
+        ];
+        let edges = [
+            [0, 1], [0, 2], [0, 4], [0, 3], // Top layer
+            [1, 2], [2, 5], [5, 4], [4, 1], // Middle layer
+            [3, 6], [6, 7], [7, 4], [3, 7], // Bottom layer
+        ];
 
-        Cube { size, faces, orientations }
+        Cube {
+            size,
+            corners,
+            edges,
+            corner_orientations: [0; 8],
+            edge_orientations: [0; 12],
+            faces,
+        }
     }
 
-    pub fn scramble(&mut self, nonce: u64) -> Vec<Move> {
-        // Create a deterministic scramble from the nonce
-        let mut rng = rand::rngs::StdRng::seed_from_u64(nonce);
+    pub fn scramble_deterministic(&mut self, nonce: u64, block_header: &[u8]) -> Vec<Move> {
+        // Create a deterministic scramble from the nonce and block header
+        let mut hasher = Sha3_256::new();
+        hasher.update(nonce.to_le_bytes());
+        hasher.update(block_header);
+        let hash = hasher.finalize();
+
+        // Use the hash to seed a random number generator for deterministic scrambling
+        let mut seed = [0u8; 32];
+        seed.copy_from_slice(&hash);
+        let mut rng = rand::rngs::StdRng::from_seed(seed);
+
         let num_moves = rng.gen_range(20..=30); // Standard scramble length
 
         let mut scramble_moves = Vec::new();
@@ -134,70 +135,40 @@ impl Cube {
 
     pub fn apply_move(&mut self, m: &Move) {
         match m {
-            Move::U(count) | Move::Uw(count) | Move::X(count) => {
+            Move::U(count) => {
                 for _ in 0..count {
                     self.rotate_face_cw(Face::Up);
                     self.rotate_up_layer();
-                    if matches!(m, Move::Uw(_)) {
-                        self.rotate_middle_layers(1, self.size - 2, Axis::Y);
-                    } else if matches!(m, Move::X(_)) {
-                        self.rotate_entire_cube_x();
-                    }
                 }
             }
-            Move::D(count) | Move::Dw(count) | Move::X(count) => {
+            Move::D(count) => {
                 for _ in 0..count {
                     self.rotate_face_cw(Face::Down);
                     self.rotate_down_layer();
-                    if matches!(m, Move::Dw(_)) {
-                        self.rotate_middle_layers(1, self.size - 2, Axis::Y);
-                    } else if matches!(m, Move::X(_)) {
-                        self.rotate_entire_cube_x();
-                    }
                 }
             }
-            Move::L(count) | Move::Lw(count) | Move::Y(count) => {
+            Move::L(count) => {
                 for _ in 0..count {
                     self.rotate_face_cw(Face::Left);
                     self.rotate_left_layer();
-                    if matches!(m, Move::Lw(_)) {
-                        self.rotate_middle_layers(1, self.size - 2, Axis::X);
-                    } else if matches!(m, Move::Y(_)) {
-                        self.rotate_entire_cube_y();
-                    }
                 }
             }
-            Move::R(count) | Move::Rw(count) | Move::Y(count) => {
+            Move::R(count) => {
                 for _ in 0..count {
                     self.rotate_face_cw(Face::Right);
                     self.rotate_right_layer();
-                    if matches!(m, Move::Rw(_)) {
-                        self.rotate_middle_layers(1, self.size - 2, Axis::X);
-                    } else if matches!(m, Move::Y(_)) {
-                        self.rotate_entire_cube_y();
-                    }
                 }
             }
-            Move::F(count) | Move::Fw(count) | Move::Z(count) => {
+            Move::F(count) => {
                 for _ in 0..count {
                     self.rotate_face_cw(Face::Front);
                     self.rotate_front_layer();
-                    if matches!(m, Move::Fw(_)) {
-                        self.rotate_middle_layers(1, self.size - 2, Axis::Z);
-                    } else if matches!(m, Move::Z(_)) {
-                        self.rotate_entire_cube_z();
-                    }
                 }
             }
-            Move::B(count) | Move::Bw(count) | Move::Z(count) => {
+            Move::B(count) => {
                 for _ in 0..count {
                     self.rotate_face_cw(Face::Back);
                     self.rotate_back_layer();
-                    if matches!(m, Move::Bw(_)) {
-                        self.rotate_middle_layers(1, self.size - 2, Axis::Z);
-                    } else if matches!(m, Move::Z(_)) {
-                        self.rotate_entire_cube_z();
-                    }
                 }
             }
         }
@@ -217,255 +188,148 @@ impl Cube {
             }
         }
 
-        // Update orientations for the face
-        self.rotate_orientation_face_cw(face);
+        // Update corner and edge orientations based on the face rotation
+        self.update_orientations_for_face_rotation(face);
     }
 
-    fn rotate_orientation_face_cw(&mut self, face: Face) {
-        let (start_x, start_y, size) = match face {
-            Face::Up => (0, 0, self.size),
-            Face::Down => (0, self.size - 1, self.size),
-            Face::Left => (0, 0, self.size),
-            Face::Right => (self.size - 1, 0, self.size),
-            Face::Front => (0, 0, self.size),
-            Face::Back => (self.size - 1, 0, self.size),
-        };
-
-        // Rotate orientations in the same pattern as colors
-        for i in start_y..start_y + size {
-            for j in start_x..start_x + size {
-                if i < self.orientations.len() && j < self.orientations[i].len() {
-                    // Apply rotation logic to orientation
-                    // This is a simplified representation
-                }
-            }
+    fn update_orientations_for_face_rotation(&mut self, face: Face) {
+        // Update orientations based on which face was rotated
+        // This is a simplified representation; a full implementation would
+        // correctly update all affected cubie orientations.
+        match face {
+            Face::Up => {
+                // Update orientations for U face rotation
+                self.corner_orientations[0] = (self.corner_orientations[0] + 1) % 3;
+                self.corner_orientations[1] = (self.corner_orientations[1] + 1) % 3;
+                self.corner_orientations[2] = (self.corner_orientations[2] + 1) % 3;
+                self.corner_orientations[3] = (self.corner_orientations[3] + 1) % 3;
+            },
+            Face::Down => {
+                // Update orientations for D face rotation
+                self.corner_orientations[4] = (self.corner_orientations[4] + 1) % 3;
+                self.corner_orientations[5] = (self.corner_orientations[5] + 1) % 3;
+                self.corner_orientations[6] = (self.corner_orientations[6] + 1) % 3;
+                self.corner_orientations[7] = (self.corner_orientations[7] + 1) % 3;
+            },
+            Face::Front => {
+                // Update orientations for F face rotation
+                self.edge_orientations[4] = (self.edge_orientations[4] + 1) % 2;
+                self.edge_orientations[5] = (self.edge_orientations[5] + 1) % 2;
+                self.edge_orientations[6] = (self.edge_orientations[6] + 1) % 2;
+                self.edge_orientations[7] = (self.edge_orientations[7] + 1) % 2;
+            },
+            Face::Back => {
+                // Update orientations for B face rotation
+                self.edge_orientations[8] = (self.edge_orientations[8] + 1) % 2;
+                self.edge_orientations[9] = (self.edge_orientations[9] + 1) % 2;
+                self.edge_orientations[10] = (self.edge_orientations[10] + 1) % 2;
+                self.edge_orientations[11] = (self.edge_orientations[11] + 1) % 2;
+            },
+            Face::Left => {
+                // Update orientations for L face rotation
+                // No edge orientation changes for L face rotation
+            },
+            Face::Right => {
+                // Update orientations for R face rotation
+                // No edge orientation changes for R face rotation
+            },
         }
     }
 
     fn rotate_up_layer(&mut self) {
-        let n = self.size;
-        let left_col: Vec<Color> = (0..n).map(|i| *self.faces[&Face::Front][0][i]).collect();
-        for i in 0..n {
-            *self.faces.get_mut(&Face::Front).unwrap()[0][i] = self.faces[&Face::Right][0][i];
-            *self.faces.get_mut(&Face::Right).unwrap()[0][i] = self.faces[&Face::Back][0][i];
-            *self.faces.get_mut(&Face::Back).unwrap()[0][i] = self.faces[&Face::Left][0][i];
-            *self.faces.get_mut(&Face::Left).unwrap()[0][i] = left_col[i];
-        }
+        // Rotate the up layer (affects corners and edges)
+        // This is a simplified representation
+        let temp_corners = self.corners[0];
+        self.corners[0] = self.corners[3];
+        self.corners[3] = self.corners[2];
+        self.corners[2] = self.corners[1];
+        self.corners[1] = temp_corners;
 
-        // Update orientations for the affected cubies
-        self.rotate_orientations_up_layer();
-    }
-
-    fn rotate_orientations_up_layer(&mut self) {
-        // Update orientations when rotating the up layer
-        let n = self.size;
-        let front_row = self.orientations[0][0].clone(); // Top row of front face
-        for i in 0..n {
-            self.orientations[0][i][0] = self.orientations[0][n - 1 - i][n - 1]; // From right to front
-            self.orientations[0][n - 1 - i][n - 1] = self.orientations[0][n - 1][n - 1 - i]; // From back to right
-            self.orientations[0][n - 1][n - 1 - i] = self.orientations[0][i][0]; // From left to back
-            self.orientations[0][i][0] = front_row[i]; // From front to left
-        }
+        let temp_edges = self.edges[0];
+        self.edges[0] = self.edges[3];
+        self.edges[3] = self.edges[2];
+        self.edges[2] = self.edges[1];
+        self.edges[1] = temp_edges;
     }
 
     fn rotate_down_layer(&mut self) {
-        let n = self.size;
-        let left_col: Vec<Color> = (0..n).map(|i| *self.faces[&Face::Front][n - 1][i]).collect();
-        for i in 0..n {
-            *self.faces.get_mut(&Face::Front).unwrap()[n - 1][i] = self.faces[&Face::Left][n - 1][i];
-            *self.faces.get_mut(&Face::Left).unwrap()[n - 1][i] = self.faces[&Face::Back][n - 1][i];
-            *self.faces.get_mut(&Face::Back).unwrap()[n - 1][i] = self.faces[&Face::Right][n - 1][i];
-            *self.faces.get_mut(&Face::Right).unwrap()[n - 1][i] = left_col[i];
-        }
+        // Rotate the down layer (affects corners and edges)
+        // This is a simplified representation
+        let temp_corners = self.corners[4];
+        self.corners[4] = self.corners[5];
+        self.corners[5] = self.corners[6];
+        self.corners[6] = self.corners[7];
+        self.corners[7] = temp_corners;
 
-        // Update orientations for the affected cubies
-        self.rotate_orientations_down_layer();
-    }
-
-    fn rotate_orientations_down_layer(&mut self) {
-        // Update orientations when rotating the down layer
-        let n = self.size;
-        let front_row = self.orientations[n - 1][0].clone(); // Bottom row of front face
-        for i in 0..n {
-            self.orientations[n - 1][i][0] = self.orientations[n - 1][i][n - 1]; // From front to left
-            self.orientations[n - 1][i][n - 1] = self.orientations[n - 1][n - 1 - i][n - 1]; // From left to back
-            self.orientations[n - 1][n - 1 - i][n - 1] = self.orientations[n - 1][n - 1][n - 1 - i]; // From back to right
-            self.orientations[n - 1][n - 1][n - 1 - i] = front_row[n - 1 - i]; // From right to front
-        }
+        let temp_edges = self.edges[8];
+        self.edges[8] = self.edges[9];
+        self.edges[9] = self.edges[10];
+        self.edges[10] = self.edges[11];
+        self.edges[11] = temp_edges;
     }
 
     fn rotate_left_layer(&mut self) {
-        let n = self.size;
-        let up_col: Vec<Color> = (0..n).map(|i| *self.faces[&Face::Up][i][0]).collect();
-        for i in 0..n {
-            *self.faces.get_mut(&Face::Up).unwrap()[i][0] = self.faces[&Face::Back][n - i - 1][n - 1];
-            *self.faces.get_mut(&Face::Back).unwrap()[n - i - 1][n - 1] = self.faces[&Face::Down][i][0];
-            *self.faces.get_mut(&Face::Down).unwrap()[i][0] = self.faces[&Face::Front][i][0];
-            *self.faces.get_mut(&Face::Front).unwrap()[i][0] = up_col[i];
-        }
+        // Rotate the left layer (affects corners and edges)
+        // This is a simplified representation
+        let temp_corners = self.corners[0];
+        self.corners[0] = self.corners[4];
+        self.corners[4] = self.corners[7];
+        self.corners[7] = self.corners[3];
+        self.corners[3] = temp_corners;
 
-        // Update orientations for the affected cubies
-        self.rotate_orientations_left_layer();
-    }
-
-    fn rotate_orientations_left_layer(&mut self) {
-        // Update orientations when rotating the left layer
-        let n = self.size;
-        let up_col = (0..n).map(|i| self.orientations[i][0][0]).collect::<Vec<_>>();
-        for i in 0..n {
-            self.orientations[i][0][0] = self.orientations[n - 1 - i][n - 1][n - 1]; // From back to up
-            self.orientations[n - 1 - i][n - 1][n - 1] = self.orientations[i][n - 1][0]; // From down to back
-            self.orientations[i][n - 1][0] = self.orientations[n - 1 - i][0][0]; // From front to down
-            self.orientations[n - 1 - i][0][0] = up_col[i]; // From up to front
-        }
+        let temp_edges = self.edges[2];
+        self.edges[2] = self.edges[8];
+        self.edges[8] = self.edges[10];
+        self.edges[10] = self.edges[4];
+        self.edges[4] = temp_edges;
     }
 
     fn rotate_right_layer(&mut self) {
-        let n = self.size;
-        let up_col: Vec<Color> = (0..n).map(|i| *self.faces[&Face::Up][i][n - 1]).collect();
-        for i in 0..n {
-            *self.faces.get_mut(&Face::Up).unwrap()[i][n - 1] = self.faces[&Face::Front][i][n - 1];
-            *self.faces.get_mut(&Face::Front).unwrap()[i][n - 1] = self.faces[&Face::Down][i][n - 1];
-            *self.faces.get_mut(&Face::Down).unwrap()[i][n - 1] = self.faces[&Face::Back][n - i - 1][0];
-            *self.faces.get_mut(&Face::Back).unwrap()[n - i - 1][0] = up_col[i];
-        }
+        // Rotate the right layer (affects corners and edges)
+        // This is a simplified representation
+        let temp_corners = self.corners[1];
+        self.corners[1] = self.corners[2];
+        self.corners[2] = self.corners[6];
+        self.corners[6] = self.corners[5];
+        self.corners[5] = temp_corners;
 
-        // Update orientations for the affected cubies
-        self.rotate_orientations_right_layer();
-    }
-
-    fn rotate_orientations_right_layer(&mut self) {
-        // Update orientations when rotating the right layer
-        let n = self.size;
-        let up_col = (0..n).map(|i| self.orientations[i][0][n - 1]).collect::<Vec<_>>();
-        for i in 0..n {
-            self.orientations[i][0][n - 1] = self.orientations[i][0][0]; // From up to front
-            self.orientations[i][0][0] = self.orientations[i][n - 1][0]; // From front to down
-            self.orientations[i][n - 1][0] = self.orientations[n - 1 - i][n - 1][n - 1]; // From down to back
-            self.orientations[n - 1 - i][n - 1][n - 1] = up_col[i]; // From back to up
-        }
+        let temp_edges = self.edges[1];
+        self.edges[1] = self.edges[5];
+        self.edges[5] = self.edges[9];
+        self.edges[9] = self.edges[7];
+        self.edges[7] = temp_edges;
     }
 
     fn rotate_front_layer(&mut self) {
-        let n = self.size;
-        let up_row: Vec<Color> = self.faces[&Face::Up][n - 1].clone();
-        for i in 0..n {
-            self.faces.get_mut(&Face::Up).unwrap()[n - 1][i] = self.faces[&Face::Left][n - i - 1][n - 1];
-            self.faces.get_mut(&Face::Left).unwrap()[n - i - 1][n - 1] = self.faces[&Face::Down][0][n - i - 1];
-            self.faces.get_mut(&Face::Down).unwrap()[0][n - i - 1] = self.faces[&Face::Right][i][0];
-            self.faces.get_mut(&Face::Right).unwrap()[i][0] = up_row[i];
-        }
+        // Rotate the front layer (affects corners and edges)
+        // This is a simplified representation
+        let temp_corners = self.corners[0];
+        self.corners[0] = self.corners[1];
+        self.corners[1] = self.corners[2];
+        self.corners[2] = self.corners[3];
+        self.corners[3] = temp_corners;
 
-        // Update orientations for the affected cubies
-        self.rotate_orientations_front_layer();
-    }
-
-    fn rotate_orientations_front_layer(&mut self) {
-        // Update orientations when rotating the front layer
-        let n = self.size;
-        let up_row = self.orientations[n - 1][0].clone();
-        for i in 0..n {
-            self.orientations[n - 1][i][0] = self.orientations[n - 1 - i][n - 1][n - 1]; // From left to up
-            self.orientations[n - 1 - i][n - 1][n - 1] = self.orientations[0][n - 1 - i][n - 1]; // From down to left
-            self.orientations[0][n - 1 - i][n - 1] = self.orientations[i][0][n - 1]; // From right to down
-            self.orientations[i][0][n - 1] = up_row[i]; // From up to right
-        }
+        let temp_edges = self.edges[0];
+        self.edges[0] = self.edges[1];
+        self.edges[1] = self.edges[2];
+        self.edges[2] = self.edges[3];
+        self.edges[3] = temp_edges;
     }
 
     fn rotate_back_layer(&mut self) {
-        let n = self.size;
-        let up_row: Vec<Color> = self.faces[&Face::Up][0].clone();
-        for i in 0..n {
-            self.faces.get_mut(&Face::Up).unwrap()[0][i] = self.faces[&Face::Right][i][n - 1];
-            self.faces.get_mut(&Face::Right).unwrap()[i][n - 1] = self.faces[&Face::Down][n - 1][n - i - 1];
-            self.faces.get_mut(&Face::Down).unwrap()[n - 1][n - i - 1] = self.faces[&Face::Left][n - i - 1][0];
-            self.faces.get_mut(&Face::Left).unwrap()[n - i - 1][0] = up_row[i];
-        }
-
-        // Update orientations for the affected cubies
-        self.rotate_orientations_back_layer();
-    }
-
-    fn rotate_orientations_back_layer(&mut self) {
-        // Update orientations when rotating the back layer
-        let n = self.size;
-        let up_row = self.orientations[0][0].clone();
-        for i in 0..n {
-            self.orientations[0][i][0] = self.orientations[i][n - 1][n - 1]; // From up to right
-            self.orientations[i][n - 1][n - 1] = self.orientations[n - 1][n - 1 - i][n - 1]; // From right to down
-            self.orientations[n - 1][n - 1 - i][n - 1] = self.orientations[n - 1 - i][0][n - 1]; // From down to left
-            self.orientations[n - 1 - i][0][n - 1] = up_row[i]; // From left to up
-        }
-    }
-
-    fn rotate_middle_layers(&mut self, start: usize, end: usize, axis: Axis) {
-        // Rotate middle layers along the specified axis
-        match axis {
-            Axis::X => {
-                for layer in start..=end {
-                    self.rotate_layer_x(layer);
-                }
-            }
-            Axis::Y => {
-                for layer in start..=end {
-                    self.rotate_layer_y(layer);
-                }
-            }
-            Axis::Z => {
-                for layer in start..=end {
-                    self.rotate_layer_z(layer);
-                }
-            }
-        }
-    }
-
-    fn rotate_layer_x(&mut self, layer: usize) {
-        // Rotate a layer along the X axis (like R, M, L moves combined)
-        // Implementation would depend on the specific cube size and layer
+        // Rotate the back layer (affects corners and edges)
         // This is a simplified representation
-    }
+        let temp_corners = self.corners[4];
+        self.corners[4] = self.corners[7];
+        self.corners[7] = self.corners[6];
+        self.corners[6] = self.corners[5];
+        self.corners[5] = temp_corners;
 
-    fn rotate_layer_y(&mut self, layer: usize) {
-        // Rotate a layer along the Y axis (like U, E, D moves combined)
-        // Implementation would depend on the specific cube size and layer
-        // This is a simplified representation
-    }
-
-    fn rotate_layer_z(&mut self, layer: usize) {
-        // Rotate a layer along the Z axis (like F, S, B moves combined)
-        // Implementation would depend on the specific cube size and layer
-        // This is a simplified representation
-    }
-
-    fn rotate_entire_cube_x(&mut self) {
-        // Rotate the entire cube around the X axis
-        // This affects all layers
-        self.rotate_face_cw(Face::Up);
-        self.rotate_face_ccw(Face::Down);
-        // Additional rotations for other faces
-    }
-
-    fn rotate_entire_cube_y(&mut self) {
-        // Rotate the entire cube around the Y axis
-        // This affects all layers
-        self.rotate_face_cw(Face::Front);
-        self.rotate_face_ccw(Face::Back);
-        // Additional rotations for other faces
-    }
-
-    fn rotate_entire_cube_z(&mut self) {
-        // Rotate the entire cube around the Z axis
-        // This affects all layers
-        self.rotate_face_cw(Face::Right);
-        self.rotate_face_ccw(Face::Left);
-        // Additional rotations for other faces
-    }
-
-    fn rotate_face_ccw(&mut self, face: Face) {
-        // Counter-clockwise rotation is 3 clockwise rotations
-        self.rotate_face_cw(face);
-        self.rotate_face_cw(face);
-        self.rotate_face_cw(face);
+        let temp_edges = self.edges[8];
+        self.edges[8] = self.edges[11];
+        self.edges[11] = self.edges[10];
+        self.edges[10] = self.edges[9];
+        self.edges[9] = temp_edges;
     }
 
     pub fn is_solved(&self) -> bool {
@@ -481,28 +345,33 @@ impl Cube {
             }
         }
 
+        // Check if corners and edges are in their original positions
+        for i in 0..8 {
+            if self.corners[i] != [i, i+1, i+2] { // Simplified check
+                return false;
+            }
+        }
+
+        for i in 0..12 {
+            if self.edges[i] != [i, i+1] { // Simplified check
+                return false;
+            }
+        }
+
         // Check orientations
-        for y in 0..self.size {
-            for x in 0..self.size {
-                for z in 0..self.size {
-                    if !self.orientations[y][x][z].is_aligned() {
-                        return false;
-                    }
-                }
+        for &orientation in &self.corner_orientations {
+            if orientation != 0 {
+                return false;
+            }
+        }
+
+        for &orientation in &self.edge_orientations {
+            if orientation != 0 {
+                return false;
             }
         }
 
         true
-    }
-
-    pub fn solve_distance(&self) -> usize {
-        if self.is_solved() {
-            0
-        } else {
-            // This is a simplified version. A full implementation would require a more complex
-            // algorithm like IDA* or Korf's algorithm.
-            1
-        }
     }
 
     pub fn verify_solution(&self, moves: &[Move]) -> bool {
@@ -513,19 +382,24 @@ impl Cube {
         cube.is_solved()
     }
 
-    pub fn meets_difficulty(&self, target_hash: &[u8; 32]) -> bool {
+    pub fn meets_difficulty(&self, hash: [u8; 32], target: u32) -> bool {
+        // Convert the hash to a number and compare with the target
+        // This is a simplified representation; a full implementation would
+        // correctly interpret the hash and target values.
+
         let mut hasher = Keccak::v256();
-        let mut hash = [0u8; 32];
+        let mut result = [0u8; 32];
 
         // Create a string representation of the cube state
         let cube_state = format!("{:?}", self.faces);
 
         hasher.update(cube_state.as_bytes());
-        hasher.finalize(&mut hash);
+        hasher.finalize(&mut result);
 
-        // Compare the hash with the target
-        // This is a simplified comparison
-        &hash[..] <= target_hash
+        // Convert the first 4 bytes of the hash to a u32 for comparison
+        let hash_value = u32::from_le_bytes([result[0], result[1], result[2], result[3]]);
+
+        hash_value <= target
     }
 }
 
@@ -550,26 +424,17 @@ pub enum Move {
     R(usize),   // Right face clockwise
     F(usize),   // Front face clockwise
     B(usize),   // Back face clockwise
-    Uw(usize),  // Up wide (U and M)
-    Dw(usize),  // Down wide (D and S)
-    Lw(usize),  // Left wide (L and M)
-    Rw(usize),  // Right wide (R and M)
-    Fw(usize),  // Front wide (F and S)
-    Bw(usize),  // Back wide (B and S)
-    X(usize),   // Entire cube rotation around X axis
-    Y(usize),   // Entire cube rotation around Y axis
-    Z(usize),   // Entire cube rotation around Z axis
 }
 
 impl Move {
     pub fn from_face_and_count(face: Face, count: usize) -> Self {
         match face {
-            Face::Up => Move::U(count),
-            Face::Down => Move::D(count),
-            Face::Left => Move::L(count),
-            Face::Right => Move::R(count),
-            Face::Front => Move::F(count),
-            Face::Back => Move::B(count),
+            Face::Up => Move::U(count % 4), // Normalize count to 0, 1, 2, or 3
+            Face::Down => Move::D(count % 4),
+            Face::Left => Move::L(count % 4),
+            Face::Right => Move::R(count % 4),
+            Face::Front => Move::F(count % 4),
+            Face::Back => Move::B(count % 4),
         }
     }
 }
@@ -582,17 +447,11 @@ pub fn calculate_difficulty(n: usize) -> u32 {
         1 => 1,
         2 => 3674160, // 2x2x2 has 3,674,160 states
         3 => 43252003274489856000, // 3x3x3 has ~4.3e19 states
+        4 => 740119684156490186987409397449857433600000000, // 4x4x4 has ~7.4e45 states
         _ => {
-            // For n > 3, we use a simplified approximation
-            // The actual number of states for n>3 is much more complex to calculate
+            // For n > 4, we use a simplified approximation
+            // The actual number of states for n>4 is much more complex to calculate
             (n * n * n * 24) as u32 // Simplified approximation
         }
     }
-}
-
-#[derive(Debug, Clone, Copy)]
-enum Axis {
-    X,
-    Y,
-    Z,
 }
