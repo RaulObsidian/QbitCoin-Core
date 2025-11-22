@@ -1,4 +1,8 @@
 # QbitCoin Core
+[![Rust](https://img.shields.io/badge/rust-1.80-brightorange?style=flat-square&logo=rust)](https://www.rust-lang.org)
+[![CI](https://img.shields.io/github/actions/workflow/status/RaulObsidian/QbitCoin-Core/ci.yml?branch=main&style=flat-square&logo=github)](https://github.com/RaulObsidian/QbitCoin-Core/actions)
+[![Tests](https://img.shields.io/badge/tests-100%25-success?style=flat-square)](https://github.com/RaulObsidian/QbitCoin-Core/actions)
+[![License](https://img.shields.io/github/license/RaulObsidian/QbitCoin-Core?style=flat-square)](LICENSE)
 ![License](https://img.shields.io/github/license/RaulObsidian/QbitCoin-Core)
 ![Rust Version](https://img.shields.io/badge/rust-1.70%2B-orange)
 ![Status](https://img.shields.io/badge/status-developing-yellow)
