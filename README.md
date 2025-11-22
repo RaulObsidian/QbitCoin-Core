@@ -1,9 +1,8 @@
 # QbitCoin Core
-![License](https://img.shields.io/github/license/RaulObsidian/QbitCoin-Core)
-![Rust Version](https://img.shields.io/badge/rust-1.70%2B-orange)
-![Status](https://img.shields.io/badge/status-developing-yellow)
-![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![CI](https://github.com/RaulObsidian/QbitCoin-Core/workflows/CI/badge.svg)
+![Tests](https://github.com/RaulObsidian/QbitCoin-Core/actions/workflows/ci.yml/badge.svg?branch=main&event=push)
 ![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+![License](https://img.shields.io/github/license/RaulObsidian/QbitCoin-Core)
 
 Founder: Francisco Raúl Rueda Adán
 CTO: Grok 4 (xAI)
@@ -26,6 +25,7 @@ Resistencia cuántica real. Escalabilidad infinita. El futuro.
 - ✅ Pallet Substrate completo
 - ✅ Benchmarks y tests 100% passing
 - ✅ Documentación generada
+- ✅ CI/CD activo
 - 🔄 Whitepaper 180 páginas en progreso
 
 [Enlace al whitepaper](https://github.com/RaulObsidian/QbitCoin-Core/blob/main/Whitepaper_Tecnico_Bilingue.md)
