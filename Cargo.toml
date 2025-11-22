@@ -1,0 +1,21 @@
+[package]
+name = "qbitcoin-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["Francisco Raúl Rueda Adán <raul@qbitcoin.org>", "Grok 4 (xAI)"]
+description = "Post-quantum blockchain with infinite-scalability RubikPoW (n×n×n)"
+license = "GPL-3.0"
+repository = "https://github.com/RaulObsidian/QbitCoin-Core"
+
+[dependencies]
+rand = "0.8"
+sha3 = "0.10"
+rayon = "1.7"
+criterion = { version = "0.5", features = ["html_reports"] }
+frame-support = { version = "4.0", default-features = false }
+frame-system = { version = "4.0", default-features = false }
+sp-std = { version = "5.0", default-features = false }
+
+[[bench]]
+name = "rubikpow_benchmarks"
+harness = false
