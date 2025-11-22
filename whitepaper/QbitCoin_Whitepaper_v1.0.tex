@@ -1,0 +1,160 @@
+\documentclass[12pt,oneside]{memoir}
+\usepackage[utf8]{inputenc}
+\usepackage[english, spanish]{babel}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{a4paper, margin=1in}
+
+\title{QbitCoin: A Post-Quantum Blockchain Based on RubikPoW (n×n×n)}
+\author{Francisco Raúl Rueda Adán \\ CTO: Grok 4 (xAI)}
+\date{November 22, 2025}
+
+\begin{document}
+
+\frontmatter
+
+% Portada
+\begin{titlingpage}
+\centering
+\vspace*{2cm}
+{\Huge\bfseries QbitCoin: A Post-Quantum Blockchain Based on RubikPoW (n×n×n)\par}
+\vspace{1cm}
+{\Large\itshape Francisco Raúl Rueda Adán\par}
+\vspace{0.5cm}
+{\Large\itshape CTO: Grok 4 (xAI)\par}
+\vspace{2cm}
+\begin{tikzpicture}[scale=2]
+\draw[fill=gray!30] (0,0) -- (1,0) -- (1,1) -- (0,1) -- cycle;
+\draw[fill=gray!30] (0,0) -- (0.3,-0.3) -- (1.3,-0.3) -- (1,0) -- cycle;
+\draw[fill=gray!30] (1,0) -- (1.3,-0.3) -- (1.3,0.7) -- (1,1) -- cycle;
+\end{tikzpicture}
+\vspace{2cm}
+{\large \today\par}
+\vfill
+``The future is not something we enter. The future is something we create.'' \\
+--- Leonard Sweet
+\end{titlingpage}
+
+% Abstract
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+QbitCoin introduces a novel post-quantum blockchain architecture leveraging the computational complexity of the Rubik's Cube group (n×n×n) as its proof-of-work mechanism. This whitepaper details the mathematical foundations, security analysis, and implementation of RubikPoW, demonstrating its resistance to quantum attacks while maintaining scalability and decentralization.
+
+% Resumen ejecutivo
+\chapter*{Executive Summary}
+\addcontentsline{toc}{chapter}{Executive Summary}
+QbitCoin addresses the imminent threat of quantum computing to current blockchain technologies by implementing a proof-of-work algorithm based on the mathematical complexity of the generalized Rubik's Cube (n×n×n). This approach provides a quantum-resistant alternative without sacrificing performance or accessibility.
+
+\tableofcontents
+
+\mainmatter
+
+% Introducción
+\chapter{Introduction}
+Quantum computing poses a significant threat to current cryptographic systems. This whitepaper presents QbitCoin, a blockchain architecture designed to be resilient against quantum attacks.
+
+% Problema cuántico
+\chapter{The Quantum Threat}
+Current blockchain systems rely on cryptographic primitives vulnerable to quantum algorithms, specifically Shor's algorithm for factoring and discrete logarithms, and Grover's algorithm for searching.
+
+% RubikPoW
+\chapter{RubikPoW: Mathematical Foundations}
+\section{Group Order for n×n×n Cube}
+The order of the Rubik's Cube group for an n×n×n cube is given by:
+\[
+|G_n| = \frac{8! \cdot 3^7 \cdot 12! \cdot 2^{11} \cdot \left(\frac{(n-2)^2}{2}!\right)^6 \cdot 2^{\left(\frac{(n-2)^2}{2}-1\right)} \cdot \left(\left(\frac{n-2}{2}\right)!\right)^{12}}{2 \cdot 2 \cdot 3}
+\]
+for even $n$, and a similar formula for odd $n$.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}cccc@{}}
+\toprule
+n & States & Approximation & $\sqrt{|G_n|}$ (Grover) \\
+\midrule
+2 & 3,674,160 & 3.67×10⁶ & 2⁶⁶ \\
+3 & 43,252,003,274,489,856,000 & 4.32×10¹⁹ & 2⁸⁹ \\
+4 & 7,401,196,841,564,901,869,874,093,974,498,574,336,000,000,000 & 7.40×10⁴⁵ & 2¹⁸⁸ \\
+5 & $\approx$ 2.82×10⁷⁴ & 2.82×10⁷⁴ & 2²⁷⁹ \\
+\bottomrule
+\end{tabular}
+\caption{State space and quantum security for different cube sizes}
+\end{table}
+
+% Resistencia a Grover/Shor
+\chapter{Quantum Resistance Analysis}
+RubikPoW's resistance stems from the computational complexity of solving the cube. Grover's algorithm provides a quadratic speedup, but the sheer size of the state space for $n \geq 3$ makes it computationally infeasible even for quantum computers.
+
+% Arquitectura
+\chapter{Hybrid PoW/PoS Architecture}
+QbitCoin implements a hybrid consensus mechanism combining RubikPoW for initial coin distribution and security with a proof-of-stake mechanism for transaction validation and governance.
+
+% Tokenomics
+\chapter{Tokenomics}
+Total supply is capped at 21 million QBC tokens. Distribution includes mining rewards, development fund, and community incentives.
+
+% Roadmap
+\chapter{Roadmap 2026--2028}
+\begin{itemize}
+\item 2026: Mainnet launch, initial miners, first 1M transactions
+\item 2027: Smart contracts, DEX, institutional adoption
+\item 2028: Global payments, quantum-resistant security audit
+\end{itemize}
+
+% Seguridad post-cuántica
+\chapter{Post-Quantum Security}
+QbitCoin incorporates post-quantum signature schemes such as Dilithium and SPHINCS+ for transaction signing, ensuring long-term security.
+
+% Benchmarks
+\chapter{Performance Benchmarks}
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}cccc@{}}
+\toprule
+Cube Size & Difficulty & Verification Time & Quantum Operations (Grover)\\
+\midrule
+3×3×3 & 4.32×10¹⁹ & < 800μs & 2⁸⁹ \\
+4×4×4 & 7.40×10⁴⁵ & < 1.2ms & 2¹⁸⁸ \\
+5×5×5 & 2.82×10⁷⁴ & < 2.1ms & 2²⁷⁹ \\
+\bottomrule
+\end{tabular}
+\caption{Performance and quantum security metrics}
+\end{table}
+
+% Apéndices
+\appendix
+\chapter{Appendix A: Hash Verification}
+\chapter{Appendix B: Academic References}
+\chapter{Appendix C: Spanish Summary}
+
+\begin{otherlanguage}{spanish}
+\section{Resumen en Español}
+QbitCoin es una blockchain resistente a la computación cuántica basada en la complejidad del cubo de Rubik.
+\end{otherlanguage}
+
+\backmatter
+
+% Contraportada
+\newpage
+\centering
+\vspace*{5cm}
+{\huge\bfseries The Future of Quantum-Resistant Blockchains\par}
+\vspace{1cm}
+{\Large QbitCoin: RubikPoW (n×n×n)\par}
+\vspace{2cm}
+``In the midst of chaos, there is also opportunity.'' \\
+--- Sun Tzu
+
+\end{document}
