@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Francisco Raúl Rueda Adán", "Gemini (CTO)"]
 description = "QubitCoin - Quantum-Resistant Blockchain based on Permutation Groups"
 license = "GPL-3.0"
-repository = "https://github.com/RaulObsidian/QbitCoin-Core"
+repository = "https://github.com/RaulObsidian/QubitCoin-Core"
 
 [dependencies]
 rand = "0.8"

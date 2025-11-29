@@ -1,14 +1,14 @@
 # Project Summary
 
 ## Overall Goal
-To create QbitCoin, a post-quantum blockchain utilizing RubikPoW (n×n×n) proof-of-work algorithm that provides quantum-resistant security through the mathematical complexity of the Rubik's Cube group.
+To create QubitCoin, a post-quantum blockchain utilizing RubikPoW (n×n×n) proof-of-work algorithm that provides quantum-resistant security through the mathematical complexity of the Rubik's Cube group.
 
 ## Key Knowledge
 - **Technology Stack**: Rust, Substrate framework, LaTeX for documentation, HTML/CSS with Tailwind for landing page
 - **Core Algorithm**: RubikPoW (n×n×n) with mathematical complexity based on the Rubik's Cube group order formula
 - **Quantum Resistance**: Uses the computational complexity of solving n×n×n cubes, with Grover's algorithm requiring 2^89+ operations even for 3×3×3
 - **Tokenomics**: 21 million QBC total supply, 70% via PoW mining, 20% for development/community, 10% for founders/investors
-- **Repository**: https://github.com/RaulObsidian/QbitCoin-Core
+- **Repository**: https://github.com/RaulObsidian/QubitCoin-Core
 - **File Structure**: src/lib.rs (RubikCube implementation), pallets/rubikpow/src/lib.rs (Substrate pallet), whitepaper/, investors/, landing/
 - **Git workflow**: Uses GitHub with CI/CD workflows, line ending normalization with `git config core.autocrlf true`
 
