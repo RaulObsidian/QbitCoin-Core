@@ -36,7 +36,7 @@ Resistencia cuántica real. Escalabilidad infinita. El futuro.
 - ✅ Whitepaper 180 páginas completo
 - ✅ CI/CD activo con todos los checks verificados
 
-[Enlace al whitepaper definitivo (PDF)](https://github.com/RaulObsidian/QubitCoin-Core/blob/main/QbitCoin_Whitepaper_v1.0_EN.pdf)
+[Enlace al whitepaper definitivo (PDF)](https://github.com/RaulObsidian/QubitCoin-Core/blob/main/QubitCoin_Whitepaper_v1.0_EN.pdf)
 [Documentación técnica](https://github.com/RaulObsidian/QubitCoin-Core/blob/main/docs/)
 
 ¡QubitCoin o muerte!

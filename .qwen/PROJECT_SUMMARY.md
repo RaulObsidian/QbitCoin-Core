@@ -15,7 +15,7 @@ To create QubitCoin, a post-quantum blockchain utilizing RubikPoW (n×n×n) proo
 ## Recent Actions
 - **Core Implementation**: Completed RubikCube v1.0 with n×n×n support, proper corner/edge permutations and orientations, deterministic scramble using nonce + block_header
 - **Pallet Development**: Implemented functional Substrate pallet with submit_solution extrinsic, difficulty adjustment, and reward system
-- **Documentation**: Created comprehensive 180-page whitepaper in LaTeX (QbitCoin_Whitepaper_v1.0.tex) detailing mathematical foundations
+- **Documentation**: Created comprehensive 180-page whitepaper in LaTeX (QubitCoin_Whitepaper_v1.0.tex) detailing mathematical foundations
 - **Investor Materials**: Generated pitch deck (pitch_deck.tex) and investor dossier (dossier_v2.tex) in LaTeX format
 - **Marketing**: Created professional landing page (index.html) with countdown to testnet, tokenomics, roadmap, and whitepaper download
 - **CI/CD Setup**: Configured GitHub Actions workflow (ci.yml) with formatting, linting, testing, benchmarking, and documentation generation

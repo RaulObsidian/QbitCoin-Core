@@ -80,22 +80,22 @@ export default function ClientPage({ locale, messages }: { locale: string; messa
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             <a
-              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QbitCoin_Whitepaper_v1.0.pdf"
-              download="QbitCoin_Whitepaper_Completo_ES.pdf"
+              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QubitCoin_Whitepaper_v1.0.pdf"
+              download="QubitCoin_Whitepaper_Completo_ES.pdf"
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-full transition duration-300 shadow-lg"
             >
               Descargar Whitepaper Completo (Español)
             </a>
             <a
-              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QbitCoin_Whitepaper_v1.0_EN.pdf"
-              download="QbitCoin_Whitepaper_Complete_EN.pdf"
+              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QubitCoin_Whitepaper_v1.0_EN.pdf"
+              download="QubitCoin_Whitepaper_Complete_EN.pdf"
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-full transition duration-300 shadow-lg"
             >
               Download Complete Whitepaper (English)
             </a>
             <a
-              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QbitCoin_Whitepaper_v1.0_DE.pdf"
-              download="QbitCoin_Whitepaper_Komplett_DE.pdf"
+              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QubitCoin_Whitepaper_v1.0_DE.pdf"
+              download="QubitCoin_Whitepaper_Komplett_DE.pdf"
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-full transition duration-300 shadow-lg"
             >
               Komplettes Whitepaper herunterladen (Deutsch)
@@ -209,8 +209,8 @@ export default function ClientPage({ locale, messages }: { locale: string; messa
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <a
-              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QbitCoin_Whitepaper_v1.0.pdf"
-              download="QbitCoin_Whitepaper_Completo_ES.pdf"
+              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QubitCoin_Whitepaper_v1.0.pdf"
+              download="QubitCoin_Whitepaper_Completo_ES.pdf"
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 p-6 rounded-lg transition duration-300 shadow-lg"
             >
               <h3 className="text-xl font-bold mb-2">Descargar Whitepaper Completo</h3>
@@ -218,8 +218,8 @@ export default function ClientPage({ locale, messages }: { locale: string; messa
             </a>
 
             <a
-              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QbitCoin_Whitepaper_v1.0_EN.pdf"
-              download="QbitCoin_Whitepaper_Complete_EN.pdf"
+              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QubitCoin_Whitepaper_v1.0_EN.pdf"
+              download="QubitCoin_Whitepaper_Complete_EN.pdf"
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 p-6 rounded-lg transition duration-300 shadow-lg"
             >
               <h3 className="text-xl font-bold mb-2">Download Complete Whitepaper</h3>
@@ -227,8 +227,8 @@ export default function ClientPage({ locale, messages }: { locale: string; messa
             </a>
 
             <a
-              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QbitCoin_Whitepaper_v1.0_DE.pdf"
-              download="QbitCoin_Whitepaper_Komplett_DE.pdf"
+              href="https://raw.githubusercontent.com/RaulObsidian/QubitCoin-Core/main/whitepaper/QubitCoin_Whitepaper_v1.0_DE.pdf"
+              download="QubitCoin_Whitepaper_Komplett_DE.pdf"
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 p-6 rounded-lg transition duration-300 shadow-lg"
             >
               <h3 className="text-xl font-bold mb-2">Komplettes Whitepaper herunterladen</h3>
@@ -236,7 +236,7 @@ export default function ClientPage({ locale, messages }: { locale: string; messa
             </a>
 
             <a
-              href="/es/Pitch_Deck_QbitCoin_ES.pdf"
+              href="/es/Pitch_Deck_QubitCoin_ES.pdf"
               target="_blank"
               className="bg-blue-700 hover:bg-blue-800 p-6 rounded-lg transition duration-300"
             >
@@ -245,7 +245,7 @@ export default function ClientPage({ locale, messages }: { locale: string; messa
             </a>
 
             <a
-              href="/en/Pitch_Deck_QbitCoin_EN.pdf"
+              href="/en/Pitch_Deck_QubitCoin_EN.pdf"
               target="_blank"
               className="bg-blue-700 hover:bg-blue-800 p-6 rounded-lg transition duration-300"
             >
@@ -254,7 +254,7 @@ export default function ClientPage({ locale, messages }: { locale: string; messa
             </a>
 
             <a
-              href="/de/Pitch_Deck_QbitCoin_DE.pdf"
+              href="/de/Pitch_Deck_QubitCoin_DE.pdf"
               target="_blank"
               className="bg-blue-700 hover:bg-blue-800 p-6 rounded-lg transition duration-300"
             >
